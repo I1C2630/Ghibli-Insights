@@ -2,20 +2,22 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ghibli Insights</title>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Antique+Soft&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-dark: #2c3e50;
-            --accent-gold: #8b4513;
-            --glass-white: rgba(255, 255, 255, 0.85);
+            --primary-dark: #1a1a1a;
+            --accent-gold: #a67b5b; /* 少し落ち着いた金色に変更 */
+            --glass-white: rgba(255, 255, 255, 0.92); /* 不透明度を上げてさらに見やすく */
+            --transition-speed: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         body {
             margin: 0; padding: 0;
             font-family: "Zen Antique Soft", serif;
             color: var(--primary-dark);
-            background-color: #000; /* 背景を黒にすることで画像を引き締める */
+            background-color: #000;
             overflow-x: hidden;
         }
 
@@ -26,154 +28,190 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden; /* ズーム用 */
-            padding: 80px 20px;
+            overflow: hidden;
+            padding: 100px 20px;
         }
 
-        /* 背景画像レイヤー（動きをつけるために分離） */
-        .bg-img {
+        /* 【重要】背景画像レイヤー（ぼかし＆ズーム追加） */
+        .bg-layer {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
-            transition: transform 1.5s ease-out;
             z-index: 1;
+            transform: scale(1.2);
+            /* ▼▼▼ ここがポイント！画像をぼかして見やすくする ▼▼▼ */
+            filter: blur(10px) brightness(0.8); 
+            transition: var(--transition-speed);
         }
 
-        /* スクロール時のズーム演出用 */
-        .visible .bg-img {
-            transform: scale(1.05);
-        }
+        .visible .bg-layer { transform: scale(1.1); /* ズームの動きも少し穏やかに */ }
 
-        /* 画像を見やすくするための明るめのフィルター */
+        /* 画像の上の薄い黒い幕（調整済み） */
         .overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.2); /* 以前より薄くして画像を見やすく */
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.2); /* ぼかしがあるので薄めでOK */
             z-index: 2;
         }
 
-        /* モダンなコンテンツカード（曇りガラス風） */
+        /* 曇りガラス風カード（より白くハッキリと） */
         .content-card {
-            position: relative;
-            z-index: 3;
+            position: relative; z-index: 3;
             background: var(--glass-white);
-            backdrop-filter: blur(10px); /* 曇りガラス効果 */
-            padding: 60px;
-            max-width: 800px;
-            border-radius: 12px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-            opacity: 0;
-            transform: translateY(50px);
-            transition: all 1s cubic-bezier(0.2, 1, 0.3, 1);
+            /* 背景のぼかしと二重になるので、こちらのぼかしは少し弱める */
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+            padding: 60px 45px;
+            max-width: 850px;
+            border-radius: 16px;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.3);
+            opacity: 0; transform: translateY(40px);
+            transition: var(--transition-speed);
         }
 
-        .visible .content-card {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .visible .content-card { opacity: 1; transform: translateY(0); }
 
-        h1 { font-size: 5rem; color: #fff; text-shadow: 0 5px 20px rgba(0,0,0,0.4); z-index: 3; text-align: center; margin: 0; }
-        h2 { font-size: 2.8rem; margin-bottom: 25px; border-bottom: 3px solid var(--primary-dark); padding-bottom: 10px; }
-        h3 { color: var(--accent-gold); margin-top: 35px; font-size: 1.5rem; }
-        p { line-height: 2.1; text-align: justify; font-size: 1.15rem; }
+        h1 { font-size: clamp(3rem, 10vw, 5.5rem); color: #fff; text-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 3; text-align: center; margin: 0; letter-spacing: 0.1em; }
+        h2 { font-size: 2.6rem; margin-bottom: 40px; border-bottom: 3px solid var(--accent-gold); padding-bottom: 15px; text-align: center; }
+        h3 { color: var(--accent-gold); margin-top: 45px; font-size: 1.5rem; border-left: 4px solid var(--accent-gold); padding-left: 15px; font-weight: bold;}
+        p { line-height: 2.1; text-align: justify; font-size: 1.1rem; margin-bottom: 25px; }
+
+        /* LINE風チャット（調整済み） */
+        .chat-container { display: flex; flex-direction: column; gap: 25px; margin-top: 30px; }
+        .chat-row { display: flex; align-items: flex-start; }
+        
+        /* アイコン枠 */
+        .chat-icon { width: 60px; height: 60px; border-radius: 50%; overflow: hidden; margin-right: 15px; flex-shrink: 0; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: #ddd;}
+        .chat-icon img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* 吹き出し */
+        .chat-bubble { background: #fff; padding: 18px 22px; border-radius: 20px; position: relative; max-width: 75%; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #eee;}
+        .chat-bubble::before { content: ""; position: absolute; top: 18px; left: -10px; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 10px solid #fff; }
+        .chat-bubble p { margin: 0; font-size: 1.05rem; line-height: 1.6; text-align: left; }
 
         /* クイズエリア */
-        #quiz-section { background: #1a1a1a; color: white; padding: 120px 20px; text-align: center; position: relative; z-index: 5; }
-        .quiz-box { background: white; color: #333; max-width: 700px; margin: 0 auto; padding: 40px; border-radius: 20px; display: none; box-shadow: 0 0 30px rgba(255,255,255,0.1); }
-        .quiz-box.active { display: block; animation: fadeIn 0.5s ease-in-out; }
-        
-        .opt-btn {
-            display: block; width: 100%; padding: 18px; margin: 12px 0;
-            background: #fff; border: 2px solid #eee; cursor: pointer;
-            font-family: inherit; font-size: 1.1rem; transition: 0.2s; border-radius: 12px;
-        }
-        .opt-btn:hover { border-color: var(--accent-gold); background: #fafafa; }
-        
-        /* 正誤表示 */
-        .btn-correct { background-color: #d4edda !important; border-color: #28a745 !important; color: #155724; font-weight: bold; }
-        .btn-wrong { background-color: #f8d7da !important; border-color: #dc3545 !important; color: #721c24; }
+        #quiz-section { background: #111; color: #ddd; padding: 120px 20px; text-align: center; z-index: 10; position: relative; }
+        .quiz-box { background: var(--glass-white); color: var(--primary-dark); max-width: 700px; margin: 0 auto; padding: 40px; border-radius: 20px; display: none; backdrop-filter: blur(10px); }
+        .quiz-box.active { display: block; animation: fadeIn 0.5s; }
+        .opt-btn { display: block; width: 100%; padding: 16px; margin: 10px 0; background: #fff; border: 1px solid #ccc; cursor: pointer; font-family: inherit; font-size: 1.1rem; border-radius: 12px; transition: 0.2s; font-weight: bold; color: #555;}
+        .opt-btn:hover { background: #f0f0f0; border-color: var(--accent-gold); color: var(--accent-gold); }
+        .btn-correct { background-color: #d4edda !important; border-color: #28a745 !important; color: #155724 !important; }
+        .btn-wrong { background-color: #f8d7da !important; border-color: #dc3545 !important; color: #721c24 !important;}
 
-        /* トップに戻るボタン（上から降ってくる） */
-        #btn-top {
-            position: fixed; top: -100px; right: 30px;
-            width: 60px; height: 60px; background: rgba(44, 62, 80, 0.9); color: white;
-            border: none; border-radius: 50%; cursor: pointer; z-index: 1000;
-            font-size: 24px; transition: top 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        #btn-top { position: fixed; top: -100px; right: 30px; width: 60px; height: 60px; background: rgba(0,0,0,0.8); color: #fff; border: none; border-radius: 50%; cursor: pointer; z-index: 1000; font-size: 24px; transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #btn-top.show { top: 30px; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <div id="hero" class="section">
-        <div class="bg-img" style="background-image: url('https://www.ghibli.jp/gallery/totoro012.jpg');"></div>
-        <div class="overlay"></div>
+        <div class="bg-layer" style="background-image: url('https://www.ghibli.jp/gallery/totoro012.jpg'); filter: brightness(0.7);"></div>
         <h1>Ghibli Insights</h1>
     </div>
 
-    <div id="rank1" class="section">
-        <div class="bg-img" style="background-image: url('https://www.ghibli.jp/gallery/mononoke036.jpg');"></div>
+    <div class="section">
+        <div class="bg-layer" style="background-image: url('https://www.ghibli.jp/gallery/mononoke036.jpg');"></div>
         <div class="overlay"></div>
         <div class="content-card">
             <h2>１位　もののけ姫</h2>
-            <p>村を襲うタタリ神を倒し、死の呪いを受けた少年アシタカ。自らの運命を変えるため西へ旅立ち、森を侵食する人間と、山犬の娘サンとの戦いに巻き込まれます。<span style="font-weight:bold; color:var(--accent-gold);">「生きろ。」</span>というメッセージは、混迷の時代への力強い叫びです。</p>
+            <h3>あらすじ</h3>
+            <p>村を襲ったタタリ神を倒し、死の呪いを受けた少年アシタカ。呪いを解く鍵を求め、西の地へと旅立ちます。そこで出会ったのは、森を削り鉄を作る「タタラ場」の人間たちと、山犬に育てられた少女サン。自然と人間の壮絶な対立の中で、アシタカは共生の道を模索します。</p>
+            <h3>制作秘話</h3>
+            <p>構想16年。宮崎駿監督が「引退」を覚悟して挑んだ超大作です。当時のアニメーションとしては異例の14万枚ものセル画を使用し、監督自身が腱鞘炎になりながらも、ほぼ全てのカットの修正を自ら手がけました。</p>
+            
+            <h3>見た人の感想</h3>
+            <div class="chat-container">
+                <div class="chat-row">
+                    <div class="chat-icon"><img src="https://i.pravatar.cc/150?img=11" alt="男性"></div>
+                    <div class="chat-bubble"><p>大人になって観ると、正義と悪の区別がつかない現実の厳しさを感じます。アシタカの強さが憧れです。</p></div>
+                </div>
+                <div class="chat-row">
+                    <div class="chat-icon"><img src="https://i.pravatar.cc/150?img=42" alt="女性"></div>
+                    <div class="chat-bubble"><p>ラストシーン、サンが「森で生きる」と決めたところに涙。安易なハッピーエンドじゃないのが最高にジブリらしい。</p></div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="rank2" class="section">
-        <div class="bg-img" style="background-image: url('https://www.ghibli.jp/gallery/chihiro043.jpg');"></div>
+    <div class="section">
+        <div class="bg-layer" style="background-image: url('https://www.ghibli.jp/gallery/chihiro043.jpg');"></div>
         <div class="overlay"></div>
         <div class="content-card">
             <h2>２位　千と千尋の神隠し</h2>
-            <p>不思議な世界で名前を奪われ「千」となった少女。油屋での労働を通じ、忘れかけていた自分自身を取り戻していく成長の物語です。日本の八百万の神々が彩る圧巻の映像美が、観る者を別世界へと誘います。</p>
+            <h3>あらすじ</h3>
+            <p>不思議な町へ迷い込み、豚に変えられた両親。10歳の少女・千尋は、魔女・湯婆婆が支配する「油屋」で名前を奪われ働くことに。出会いや困難を通じ、現代っ子の千尋が生きる力を取り戻していく物語です。</p>
+            <h3>制作秘話</h3>
+            <p>監督の友人の娘さんをモデルに制作。「スーパーパワーがなくても、普通の女の子が現実で生きていく力を描きたい」という思いが込められています。また、カオナシは当初、通行人の一人に過ぎないキャラでした。</p>
+            <h3>見た人の感想</h3>
+            <div class="chat-container">
+                <div class="chat-row">
+                    <div class="chat-icon"><img src="https://i.pravatar.cc/150?img=35" alt="女性"></div>
+                    <div class="chat-bubble"><p>千尋がどんどんたくましくなる姿に勇気をもらいます！あと、ハク様がとにかくイケメンすぎて困る（笑）</p></div>
+                </div>
+                <div class="chat-row">
+                    <div class="chat-icon"><img src="https://i.pravatar.cc/150?img=69" alt="男性"></div>
+                    <div class="chat-bubble"><p>カオナシの孤独さに、現代人の寂しさを感じてグッときた。電車に乗るシーンの静けさが一番好きです。</p></div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="rank3" class="section">
-        <div class="bg-img" style="background-image: url('https://www.ghibli.jp/gallery/laputa048.jpg');"></div>
+    <div class="section">
+        <div class="bg-layer" style="background-image: url('https://www.ghibli.jp/gallery/laputa048.jpg');"></div>
         <div class="overlay"></div>
         <div class="content-card">
             <h2>３位　天空の城ラピュタ</h2>
-            <p>空から降ってきた少女シータと、見習い機械工の少年パズー。二人は飛行石を巡る争いに巻き込まれ、伝説の浮遊島ラピュタへと向かいます。圧倒的な冒険活劇の中に、<span style="font-weight:bold; color:var(--accent-gold);">「人間は土を離れては生きられない」</span>という深い警鐘が込められています。</p>
+            <h3>あらすじ</h3>
+            <p>空から降ってきた少女シータと、彼女を助けた少年パズー。二人は伝説の浮遊都市「ラピュタ」を目指し、飛行石を狙う軍や空賊ドーラ一家との大冒険を繰り広げます。そこには失われた超古代文明の秘密が眠っていました。</p>
+            <h3>制作秘話</h3>
+            <p>ジブリ設立第1作目。監督は「見終わった後に子供たちが外へ飛び出したくなるような映画」を目指しました。炭鉱の町はイギリスのウェールズ地方をモデルにしており、実際の廃坑をロケハンして描かれました。</p>
+            <h3>見た人の感想</h3>
+            <div class="chat-container">
+                <div class="chat-row">
+                    <div class="chat-icon"><img src="https://i.pravatar.cc/150?img=59" alt="男性"></div>
+                    <div class="chat-bubble"><p>パズーの行動力がハンパない！ドーラ一家との共闘もワクワクするし、王道の冒険活劇として完璧だと思う。</p></div>
+                </div>
+                <div class="chat-row">
+                    <div class="chat-icon"><img src="https://i.pravatar.cc/150?img=23" alt="女性"></div>
+                    <div class="chat-bubble"><p>「土を離れては生きられない」という言葉が、今の時代にこそ響きます。最後、城が空へ消えていく姿が美しい。</p></div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="quiz-section">
-        <h2>🎬 クイズで紐解くジブリの世界</h2>
+        <h2>🎬 QUIZ CHALLENGE</h2>
         <div id="quiz-container"></div>
-        <div id="quiz-final" style="display:none; font-size: 2.5rem; margin-top: 30px;"></div>
+        <div id="quiz-final" style="display:none; font-size: 2rem;"></div>
     </div>
 
     <button id="btn-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">▲</button>
 
     <script>
-        // スクロール検知
-        const obs = new IntersectionObserver((entries) => {
-            entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
-        }, { threshold: 0.3 });
+        // スクロール演出
+        const obs = new IntersectionObserver((es) => {
+            es.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+        }, { threshold: 0.2 });
         document.querySelectorAll('.section').forEach(s => obs.observe(s));
 
         window.addEventListener('scroll', () => {
-            const btn = document.getElementById('btn-top');
-            (window.scrollY > 800) ? btn.classList.add('show') : btn.classList.remove('show');
+            const b = document.getElementById('btn-top');
+            (window.scrollY > 800) ? b.classList.add('show') : b.classList.remove('show');
         });
 
-        // クイズデータ
+        // クイズ
         const quizData = [
-            { q: "『もののけ姫』でアシタカが、タタリ神を倒して受けたのは？", a: ["褒美", "呪い", "贈り物", "魔法"], c: 1 },
-            { q: "千と千尋で、千尋が働く湯屋の名前は？", a: ["銭湯屋", "八百万屋", "油屋", "神隠し屋"], c: 2 },
-            { q: "ラピュタで、シータが持っている光る石の名前は？", a: ["魔法石", "飛行石", "浮遊石", "ラピュタ石"], c: 1 },
-            { q: "『もののけ姫』の制作にかかった作画枚数は約何万枚？", a: ["5万枚", "10万枚", "14万枚", "20万枚"], c: 2 },
-            { q: "『千と千尋』で、自分の名前を忘れないよう千尋に助言したのは？", a: ["ハク", "釜爺", "坊", "カオナシ"], c: 0 },
-            { q: "ラピュタで、パズーとシータが逃げる時に協力した空賊の名前は？", a: ["ムスカ", "ポルコ", "ドーラ", "フィオ"], c: 2 },
-            { q: "ラピュタを崩壊させる、滅びの呪文は何？", a: ["ルシータ", "パルプンテ", "バルス", "テト"], c: 2 },
-            { q: "千と千尋のモデルの一部とされる建物がある場所は？", a: ["江戸東京たてもの園", "黄金の国", "極楽浄土", "神の社"], c: 0 },
-            { q: "『ラピュタ』の炭鉱町のモデルとなった国はどこ？", a: ["イギリス", "イタリア", "フランス", "ドイツ"], c: 0 },
-            { q: "宮崎駿監督が「もののけ姫」で伝えたかった言葉は？", a: ["働け。", "遊べ。", "生きろ。", "戦え。"], c: 2 }
+            { q: "『もののけ姫』の制作に費やされた構想期間は？", a: ["5年", "10年", "16年", "20年"], c: 2 },
+            { q: "千と千尋で、カオナシは当初どんな役だった？", a: ["重要な敵", "通行人の一人", "ハクの弟", "油屋の店主"], c: 1 },
+            { q: "ラピュタのロケハンで訪れた国はどこ？", a: ["フランス", "イギリス", "ドイツ", "イタリア"], c: 1 },
+            { q: "『もののけ姫』で使用された作画枚数は約何万枚？", a: ["5万枚", "10万枚", "14万枚", "20万枚"], c: 2 },
+            { q: "千と千尋の物語は、誰のために作られた？", a: ["全ての大人", "監督の友人の娘", "世界中の子供", "動物たち"], c: 1 },
+            { q: "ラピュタの劇中で、人間はどこから離れては生きられないと言われた？", a: ["空", "海", "土", "機械"], c: 2 },
+            { q: "もののけ姫のキャッチコピーは？", a: ["飛べ。", "生きろ。", "愛せ。", "守れ。"], c: 1 },
+            { q: "千尋が油屋で失ったものは？", a: ["声", "記憶", "名前", "勇気"], c: 2 },
+            { q: "パズーの職業（見習い）は何？", a: ["空賊", "機械工", "炭鉱夫", "料理人"], c: 1 },
+            { q: "ジブリ設立第1作目の映画は？", a: ["トトロ", "ナウシカ", "ラピュタ", "もののけ姫"], c: 2 }
         ];
 
         let cur = 0, score = 0;
@@ -181,40 +219,28 @@
             const container = document.getElementById('quiz-container');
             container.innerHTML = "";
             if(cur < quizData.length) {
-                const data = quizData[cur];
+                const d = quizData[cur];
                 const box = document.createElement('div');
                 box.className = "quiz-box active";
-                let btns = data.a.map((opt, i) => `<button class="opt-btn" id="q-${i}" onclick="ans(this, ${i})">${opt}</button>`).join('');
-                box.innerHTML = `<p>第 ${cur+1} 問</p><p style="font-size:1.4rem; font-weight:bold;">${data.q}</p>${btns}`;
+                let btns = d.a.map((opt, i) => `<button class="opt-btn" id="q-${i}" onclick="ans(this, ${i})">${opt}</button>`).join('');
+                box.innerHTML = `<p style="color:#888; margin-bottom:10px;">Question ${cur+1}/10</p><p style="font-size:1.3rem; font-weight:bold; margin-bottom:25px; line-height:1.4;">${d.q}</p>${btns}`;
                 container.appendChild(box);
             } else {
-                const fin = document.getElementById('quiz-final');
-                fin.style.display = "block";
-                fin.innerHTML = `COMPLETE!<br>Score: ${score} / 10`;
+                document.getElementById('quiz-final').style.display = "block";
+                document.getElementById('quiz-final').innerHTML = `ALL DONE!<br>Score: ${score} / 10`;
             }
         }
 
         function ans(btn, idx) {
-            const correctIdx = quizData[cur].c;
-            const allBtns = document.querySelectorAll('.opt-btn');
-            allBtns.forEach(b => b.disabled = true);
-
-            if(idx === correctIdx) {
-                btn.classList.add('btn-correct');
-                btn.innerHTML += " ⭕";
-                score++;
+            const correct = quizData[cur].c;
+            document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+            if(idx === correct) {
+                btn.classList.add('btn-correct'); btn.innerHTML += " ⭕"; score++;
             } else {
-                btn.classList.add('btn-wrong');
-                btn.innerHTML += " ❌";
-                document.getElementById(`q-${correctIdx}`).classList.add('btn-correct');
-                document.getElementById(`q-${correctIdx}`).innerHTML += " ⭕";
+                btn.classList.add('btn-wrong'); btn.innerHTML += " ❌";
+                document.getElementById(`q-${correct}`).classList.add('btn-correct'); document.getElementById(`q-${correct}`).innerHTML += " ⭕";
             }
-
-            // 1秒待機して次へ
-            setTimeout(() => {
-                cur++;
-                renderQuiz();
-            }, 1000);
+            setTimeout(() => { cur++; renderQuiz(); }, 1000);
         }
         renderQuiz();
     </script>
