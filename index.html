@@ -2,68 +2,221 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ghibli Insights</title>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Antique+Soft&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-dark: #1a1a1a;
-            --accent-color: #8b4513;
-            --glass-bg: rgba(255, 255, 255, 0.75);
-            --transition-smooth: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+            --primary-dark: #2c3e50;
+            --accent-gold: #8b4513;
+            --glass-white: rgba(255, 255, 255, 0.85);
         }
 
         body {
             margin: 0; padding: 0;
             font-family: "Zen Antique Soft", serif;
             color: var(--primary-dark);
-            background-color: #000;
+            background-color: #000; /* 背景を黒にすることで画像を引き締める */
             overflow-x: hidden;
         }
 
-        /* セクション基盤 */
+        /* セクション設定 */
         .section {
             position: relative;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
-            padding: 100px 20px;
+            overflow: hidden; /* ズーム用 */
+            padding: 80px 20px;
         }
 
-        /* 背景画像レイヤー（ズーム演出） */
-        .bg-layer {
+        /* 背景画像レイヤー（動きをつけるために分離） */
+        .bg-img {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
+            transition: transform 1.5s ease-out;
             z-index: 1;
-            transform: scale(1.15); /* 初期状態 */
-            transition: var(--transition-smooth);
-            filter: brightness(0.9); /* 画像自体を少し鮮明に（明るく） */
         }
 
-        .visible .bg-layer {
-            transform: scale(1); /* スクロールに合わせてズームアウト */
+        /* スクロール時のズーム演出用 */
+        .visible .bg-img {
+            transform: scale(1.05);
         }
 
-        /* 画像を見やすくするための繊細なグラデーション */
+        /* 画像を見やすくするための明るめのフィルター */
         .overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 100%);
+            background: rgba(0, 0, 0, 0.2); /* 以前より薄くして画像を見やすく */
             z-index: 2;
         }
 
-        /* グラスモーフィズム・カード */
+        /* モダンなコンテンツカード（曇りガラス風） */
         .content-card {
             position: relative;
             z-index: 3;
-            background: var(--glass-bg);
-            backdrop-filter: blur(15px); /* 背景をぼかして文字を浮き立たせる */
-            -webkit-backdrop-filter: blur(15px);
-            padding: 80px 60px;
-            max-width: 750px;
-            border-radius: 4px; /* あえて少し角を立たせるのがモダン
+            background: var(--glass-white);
+            backdrop-filter: blur(10px); /* 曇りガラス効果 */
+            padding: 60px;
+            max-width: 800px;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 1s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+
+        .visible .content-card {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h1 { font-size: 5rem; color: #fff; text-shadow: 0 5px 20px rgba(0,0,0,0.4); z-index: 3; text-align: center; margin: 0; }
+        h2 { font-size: 2.8rem; margin-bottom: 25px; border-bottom: 3px solid var(--primary-dark); padding-bottom: 10px; }
+        h3 { color: var(--accent-gold); margin-top: 35px; font-size: 1.5rem; }
+        p { line-height: 2.1; text-align: justify; font-size: 1.15rem; }
+
+        /* クイズエリア */
+        #quiz-section { background: #1a1a1a; color: white; padding: 120px 20px; text-align: center; position: relative; z-index: 5; }
+        .quiz-box { background: white; color: #333; max-width: 700px; margin: 0 auto; padding: 40px; border-radius: 20px; display: none; box-shadow: 0 0 30px rgba(255,255,255,0.1); }
+        .quiz-box.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        .opt-btn {
+            display: block; width: 100%; padding: 18px; margin: 12px 0;
+            background: #fff; border: 2px solid #eee; cursor: pointer;
+            font-family: inherit; font-size: 1.1rem; transition: 0.2s; border-radius: 12px;
+        }
+        .opt-btn:hover { border-color: var(--accent-gold); background: #fafafa; }
+        
+        /* 正誤表示 */
+        .btn-correct { background-color: #d4edda !important; border-color: #28a745 !important; color: #155724; font-weight: bold; }
+        .btn-wrong { background-color: #f8d7da !important; border-color: #dc3545 !important; color: #721c24; }
+
+        /* トップに戻るボタン（上から降ってくる） */
+        #btn-top {
+            position: fixed; top: -100px; right: 30px;
+            width: 60px; height: 60px; background: rgba(44, 62, 80, 0.9); color: white;
+            border: none; border-radius: 50%; cursor: pointer; z-index: 1000;
+            font-size: 24px; transition: top 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #btn-top.show { top: 30px; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div id="hero" class="section">
+        <div class="bg-img" style="background-image: url('https://www.ghibli.jp/gallery/totoro012.jpg');"></div>
+        <div class="overlay"></div>
+        <h1>Ghibli Insights</h1>
+    </div>
+
+    <div id="rank1" class="section">
+        <div class="bg-img" style="background-image: url('https://www.ghibli.jp/gallery/mononoke036.jpg');"></div>
+        <div class="overlay"></div>
+        <div class="content-card">
+            <h2>１位　もののけ姫</h2>
+            <p>村を襲うタタリ神を倒し、死の呪いを受けた少年アシタカ。自らの運命を変えるため西へ旅立ち、森を侵食する人間と、山犬の娘サンとの戦いに巻き込まれます。<span style="font-weight:bold; color:var(--accent-gold);">「生きろ。」</span>というメッセージは、混迷の時代への力強い叫びです。</p>
+        </div>
+    </div>
+
+    <div id="rank2" class="section">
+        <div class="bg-img" style="background-image: url('https://www.ghibli.jp/gallery/chihiro043.jpg');"></div>
+        <div class="overlay"></div>
+        <div class="content-card">
+            <h2>２位　千と千尋の神隠し</h2>
+            <p>不思議な世界で名前を奪われ「千」となった少女。油屋での労働を通じ、忘れかけていた自分自身を取り戻していく成長の物語です。日本の八百万の神々が彩る圧巻の映像美が、観る者を別世界へと誘います。</p>
+        </div>
+    </div>
+
+    <div id="rank3" class="section">
+        <div class="bg-img" style="background-image: url('https://www.ghibli.jp/gallery/laputa048.jpg');"></div>
+        <div class="overlay"></div>
+        <div class="content-card">
+            <h2>３位　天空の城ラピュタ</h2>
+            <p>空から降ってきた少女シータと、見習い機械工の少年パズー。二人は飛行石を巡る争いに巻き込まれ、伝説の浮遊島ラピュタへと向かいます。圧倒的な冒険活劇の中に、<span style="font-weight:bold; color:var(--accent-gold);">「人間は土を離れては生きられない」</span>という深い警鐘が込められています。</p>
+        </div>
+    </div>
+
+    <div id="quiz-section">
+        <h2>🎬 クイズで紐解くジブリの世界</h2>
+        <div id="quiz-container"></div>
+        <div id="quiz-final" style="display:none; font-size: 2.5rem; margin-top: 30px;"></div>
+    </div>
+
+    <button id="btn-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">▲</button>
+
+    <script>
+        // スクロール検知
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+        }, { threshold: 0.3 });
+        document.querySelectorAll('.section').forEach(s => obs.observe(s));
+
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('btn-top');
+            (window.scrollY > 800) ? btn.classList.add('show') : btn.classList.remove('show');
+        });
+
+        // クイズデータ
+        const quizData = [
+            { q: "『もののけ姫』でアシタカが、タタリ神を倒して受けたのは？", a: ["褒美", "呪い", "贈り物", "魔法"], c: 1 },
+            { q: "千と千尋で、千尋が働く湯屋の名前は？", a: ["銭湯屋", "八百万屋", "油屋", "神隠し屋"], c: 2 },
+            { q: "ラピュタで、シータが持っている光る石の名前は？", a: ["魔法石", "飛行石", "浮遊石", "ラピュタ石"], c: 1 },
+            { q: "『もののけ姫』の制作にかかった作画枚数は約何万枚？", a: ["5万枚", "10万枚", "14万枚", "20万枚"], c: 2 },
+            { q: "『千と千尋』で、自分の名前を忘れないよう千尋に助言したのは？", a: ["ハク", "釜爺", "坊", "カオナシ"], c: 0 },
+            { q: "ラピュタで、パズーとシータが逃げる時に協力した空賊の名前は？", a: ["ムスカ", "ポルコ", "ドーラ", "フィオ"], c: 2 },
+            { q: "ラピュタを崩壊させる、滅びの呪文は何？", a: ["ルシータ", "パルプンテ", "バルス", "テト"], c: 2 },
+            { q: "千と千尋のモデルの一部とされる建物がある場所は？", a: ["江戸東京たてもの園", "黄金の国", "極楽浄土", "神の社"], c: 0 },
+            { q: "『ラピュタ』の炭鉱町のモデルとなった国はどこ？", a: ["イギリス", "イタリア", "フランス", "ドイツ"], c: 0 },
+            { q: "宮崎駿監督が「もののけ姫」で伝えたかった言葉は？", a: ["働け。", "遊べ。", "生きろ。", "戦え。"], c: 2 }
+        ];
+
+        let cur = 0, score = 0;
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = "";
+            if(cur < quizData.length) {
+                const data = quizData[cur];
+                const box = document.createElement('div');
+                box.className = "quiz-box active";
+                let btns = data.a.map((opt, i) => `<button class="opt-btn" id="q-${i}" onclick="ans(this, ${i})">${opt}</button>`).join('');
+                box.innerHTML = `<p>第 ${cur+1} 問</p><p style="font-size:1.4rem; font-weight:bold;">${data.q}</p>${btns}`;
+                container.appendChild(box);
+            } else {
+                const fin = document.getElementById('quiz-final');
+                fin.style.display = "block";
+                fin.innerHTML = `COMPLETE!<br>Score: ${score} / 10`;
+            }
+        }
+
+        function ans(btn, idx) {
+            const correctIdx = quizData[cur].c;
+            const allBtns = document.querySelectorAll('.opt-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            if(idx === correctIdx) {
+                btn.classList.add('btn-correct');
+                btn.innerHTML += " ⭕";
+                score++;
+            } else {
+                btn.classList.add('btn-wrong');
+                btn.innerHTML += " ❌";
+                document.getElementById(`q-${correctIdx}`).classList.add('btn-correct');
+                document.getElementById(`q-${correctIdx}`).innerHTML += " ⭕";
+            }
+
+            // 1秒待機して次へ
+            setTimeout(() => {
+                cur++;
+                renderQuiz();
+            }, 1000);
+        }
+        renderQuiz();
+    </script>
+</body>
+</html>
